@@ -537,6 +537,22 @@ class FoundationTestResponseTest extends TestCase
         $testResponse->assertJsonValidationErrors(['one' => 'foo', 'two' => 'bar']);
     }
 
+    public function testAssertJsonValidationErrorMessagesMultipleMessagesCanFail()
+    {
+        $this->expectException(AssertionFailedError::class);
+
+        $data = [
+            'status' => 'ok',
+            'errors' => ['one' => 'foo', 'two' => 'bar'],
+        ];
+
+        $testResponse = TestResponse::fromBaseResponse(
+            (new Response)->setContent(json_encode($data))
+        );
+
+        $testResponse->assertJsonValidationErrors(['one' => 'foo', 'three' => 'baz']);
+    }
+
     public function testAssertJsonValidationErrorMessagesMixed()
     {
         $data = [
@@ -692,7 +708,7 @@ class FoundationTestResponseTest extends TestCase
 
         $response = TestResponse::fromBaseResponse(new Response);
 
-        $this->assertEquals(
+        $this->assertSame(
             'bar', $response->foo()
         );
     }
@@ -715,7 +731,7 @@ class FoundationTestResponseTest extends TestCase
     {
         $response = TestResponse::fromBaseResponse(new Response(new JsonSerializableMixedResourcesStub));
 
-        $this->assertEquals('foo', $response->json('foobar.foobar_foo'));
+        $this->assertSame('foo', $response->json('foobar.foobar_foo'));
         $this->assertEquals(
             json_decode($response->getContent(), true),
             $response->json()

@@ -11,7 +11,7 @@ use Illuminate\Contracts\Support\Responsable;
  */
 class ResponsableTest extends TestCase
 {
-    public function test_responsable_objects_are_rendered()
+    public function testResponsableObjectsAreRendered()
     {
         Route::get('/responsable', function () {
             return new TestResponsableResponse;
@@ -20,8 +20,8 @@ class ResponsableTest extends TestCase
         $response = $this->get('/responsable');
 
         $this->assertEquals(201, $response->status());
-        $this->assertEquals('Taylor', $response->headers->get('X-Test-Header'));
-        $this->assertEquals('hello world', $response->getContent());
+        $this->assertSame('Taylor', $response->headers->get('X-Test-Header'));
+        $this->assertSame('hello world', $response->getContent());
     }
 }
 

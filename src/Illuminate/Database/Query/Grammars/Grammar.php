@@ -34,7 +34,6 @@ class Grammar extends BaseGrammar
         'orders',
         'limit',
         'offset',
-        'unions',
         'lock',
     ];
 
@@ -65,6 +64,10 @@ class Grammar extends BaseGrammar
         $sql = trim($this->concatenate(
             $this->compileComponents($query))
         );
+
+        if ($query->unions) {
+            $sql = $this->wrapUnion($sql).' '.$this->compileUnions($query);
+        }
 
         $query->columns = $original;
 
@@ -793,7 +796,18 @@ class Grammar extends BaseGrammar
     {
         $conjunction = $union['all'] ? ' union all ' : ' union ';
 
-        return $conjunction.$union['query']->toSql();
+        return $conjunction.$this->wrapUnion($union['query']->toSql());
+    }
+
+    /**
+     * Wrap a union subquery in parentheses.
+     *
+     * @param  string  $sql
+     * @return string
+     */
+    protected function wrapUnion($sql)
+    {
+        return '('.$sql.')';
     }
 
     /**
@@ -859,6 +873,18 @@ class Grammar extends BaseGrammar
     }
 
     /**
+     * Compile an insert ignore statement into SQL.
+     *
+     * @param  \Illuminate\Database\Query\Builder  $query
+     * @param  array  $values
+     * @return string
+     */
+    public function compileInsertOrIgnore(Builder $query, array $values)
+    {
+        throw new RuntimeException('This database engine does not support inserting while ignoring errors.');
+    }
+
+    /**
      * Compile an insert and get ID statement into SQL.
      *
      * @param  \Illuminate\Database\Query\Builder  $query
@@ -891,32 +917,63 @@ class Grammar extends BaseGrammar
      * @param  array  $values
      * @return string
      */
-    public function compileUpdate(Builder $query, $values)
+    public function compileUpdate(Builder $query, array $values)
     {
         $table = $this->wrapTable($query->from);
 
-        // Each one of the columns in the update statements needs to be wrapped in the
-        // keyword identifiers, also a place-holder needs to be created for each of
-        // the values in the list of bindings so we can make the sets statements.
-        $columns = collect($values)->map(function ($value, $key) {
+        $columns = $this->compileUpdateColumns($query, $values);
+
+        $where = $this->compileWheres($query);
+
+        return trim(
+            isset($query->joins)
+                ? $this->compileUpdateWithJoins($query, $table, $columns, $where)
+                : $this->compileUpdateWithoutJoins($query, $table, $columns, $where)
+        );
+    }
+
+    /**
+     * Compile the columns for an update statement.
+     *
+     * @param  \Illuminate\Database\Query\Builder  $query
+     * @param  array  $values
+     * @return string
+     */
+    protected function compileUpdateColumns(Builder $query, array $values)
+    {
+        return collect($values)->map(function ($value, $key) {
             return $this->wrap($key).' = '.$this->parameter($value);
         })->implode(', ');
+    }
 
-        // If the query has any "join" clauses, we will setup the joins on the builder
-        // and compile them so we can attach them to this update, as update queries
-        // can get join statements to attach to other tables when they're needed.
-        $joins = '';
+    /**
+     * Compile an update statement without joins into SQL.
+     *
+     * @param  \Illuminate\Database\Query\Builder  $query
+     * @param  string  $table
+     * @param  string  $columns
+     * @param  string  $where
+     * @return string
+     */
+    protected function compileUpdateWithoutJoins(Builder $query, $table, $columns, $where)
+    {
+        return "update {$table} set {$columns} {$where}";
+    }
 
-        if (isset($query->joins)) {
-            $joins = ' '.$this->compileJoins($query, $query->joins);
-        }
+    /**
+     * Compile an update statement with joins into SQL.
+     *
+     * @param  \Illuminate\Database\Query\Builder  $query
+     * @param  string  $table
+     * @param  string  $columns
+     * @param  string  $where
+     * @return string
+     */
+    protected function compileUpdateWithJoins(Builder $query, $table, $columns, $where)
+    {
+        $joins = $this->compileJoins($query, $query->joins);
 
-        // Of course, update queries may also be constrained by where clauses so we'll
-        // need to compile the where clauses and attach it to the query so only the
-        // intended records are updated by the SQL statements we generate to run.
-        $wheres = $this->compileWheres($query);
-
-        return trim("update {$table}{$joins} set $columns $wheres");
+        return "update {$table} {$joins} set {$columns} {$where}";
     }
 
     /**
@@ -1005,7 +1062,7 @@ class Grammar extends BaseGrammar
      */
     public function compileTruncate(Builder $query)
     {
-        return ['truncate '.$this->wrapTable($query->from) => []];
+        return ['truncate table '.$this->wrapTable($query->from) => []];
     }
 
     /**

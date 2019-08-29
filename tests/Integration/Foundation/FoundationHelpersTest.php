@@ -13,7 +13,7 @@ use Illuminate\Contracts\Debug\ExceptionHandler;
  */
 class FoundationHelpersTest extends TestCase
 {
-    public function test_rescue()
+    public function testRescue()
     {
         $this->assertEquals(rescue(function () {
             throw new Exception;
@@ -77,7 +77,7 @@ class FoundationHelpersTest extends TestCase
 
         try {
             mix('missing.js');
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             throw $e;
         } finally { // make sure we can cleanup the file
             unlink($manifest);

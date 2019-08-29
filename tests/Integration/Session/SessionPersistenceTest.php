@@ -17,7 +17,7 @@ use Illuminate\Contracts\Debug\ExceptionHandler;
  */
 class SessionPersistenceTest extends TestCase
 {
-    public function test_session_is_persisted_even_if_exception_is_thrown_from_route()
+    public function testSessionIsPersistedEvenIfExceptionIsThrownFromRoute()
     {
         $handler = new FakeNullSessionHandler;
         $this->assertFalse($handler->written);
@@ -30,7 +30,7 @@ class SessionPersistenceTest extends TestCase
             throw new TokenMismatchException;
         })->middleware('web');
 
-        $response = $this->get('/');
+        $this->get('/');
         $this->assertTrue($handler->written);
     }
 

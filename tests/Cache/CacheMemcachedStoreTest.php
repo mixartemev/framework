@@ -17,8 +17,8 @@ class CacheMemcachedStoreTest extends TestCase
         }
 
         $memcache = $this->getMockBuilder(stdClass::class)->setMethods(['get', 'getResultCode'])->getMock();
-        $memcache->expects($this->once())->method('get')->with($this->equalTo('foo:bar'))->will($this->returnValue(null));
-        $memcache->expects($this->once())->method('getResultCode')->will($this->returnValue(1));
+        $memcache->expects($this->once())->method('get')->with($this->equalTo('foo:bar'))->willReturn(null);
+        $memcache->expects($this->once())->method('getResultCode')->willReturn(1);
         $store = new MemcachedStore($memcache, 'foo');
         $this->assertNull($store->get('bar'));
     }
@@ -30,10 +30,10 @@ class CacheMemcachedStoreTest extends TestCase
         }
 
         $memcache = $this->getMockBuilder(stdClass::class)->setMethods(['get', 'getResultCode'])->getMock();
-        $memcache->expects($this->once())->method('get')->will($this->returnValue('bar'));
-        $memcache->expects($this->once())->method('getResultCode')->will($this->returnValue(0));
+        $memcache->expects($this->once())->method('get')->willReturn('bar');
+        $memcache->expects($this->once())->method('getResultCode')->willReturn(0);
         $store = new MemcachedStore($memcache);
-        $this->assertEquals('bar', $store->get('foo'));
+        $this->assertSame('bar', $store->get('foo'));
     }
 
     public function testMemcacheGetMultiValuesAreReturnedWithCorrectKeys()
@@ -45,10 +45,10 @@ class CacheMemcachedStoreTest extends TestCase
         $memcache = $this->getMockBuilder(stdClass::class)->setMethods(['getMulti', 'getResultCode'])->getMock();
         $memcache->expects($this->once())->method('getMulti')->with(
             ['foo:foo', 'foo:bar', 'foo:baz']
-        )->will($this->returnValue([
+        )->willReturn([
             'fizz', 'buzz', 'norf',
-        ]));
-        $memcache->expects($this->once())->method('getResultCode')->will($this->returnValue(0));
+        ]);
+        $memcache->expects($this->once())->method('getResultCode')->willReturn(0);
         $store = new MemcachedStore($memcache, 'foo');
         $this->assertEquals([
             'foo'   => 'fizz',
@@ -143,9 +143,9 @@ class CacheMemcachedStoreTest extends TestCase
         }
 
         $store = new MemcachedStore(new Memcached, 'bar');
-        $this->assertEquals('bar:', $store->getPrefix());
+        $this->assertSame('bar:', $store->getPrefix());
         $store->setPrefix('foo');
-        $this->assertEquals('foo:', $store->getPrefix());
+        $this->assertSame('foo:', $store->getPrefix());
         $store->setPrefix(null);
         $this->assertEmpty($store->getPrefix());
     }

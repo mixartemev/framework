@@ -15,14 +15,14 @@ class HttpJsonResponseTest extends TestCase
     /**
      * @dataProvider setAndRetrieveDataProvider
      *
-     * @param  $data
+     * @param  mixed  $data
      */
     public function testSetAndRetrieveData($data): void
     {
         $response = new JsonResponse($data);
 
         $this->assertInstanceOf(stdClass::class, $response->getData());
-        $this->assertEquals('bar', $response->getData()->foo);
+        $this->assertSame('bar', $response->getData()->foo);
     }
 
     public function setAndRetrieveDataProvider(): array

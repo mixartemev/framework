@@ -10,6 +10,7 @@ use Illuminate\Queue\WorkerOptions;
 use Illuminate\Queue\Events\JobFailed;
 use Illuminate\Queue\Events\JobProcessed;
 use Illuminate\Queue\Events\JobProcessing;
+use Illuminate\Contracts\Cache\Repository as Cache;
 
 class WorkCommand extends Command
 {
@@ -21,7 +22,6 @@ class WorkCommand extends Command
     protected $signature = 'queue:work
                             {connection? : The name of the queue connection to work}
                             {--queue= : The names of the queues to work}
-                            {--daemon : Run the worker in daemon mode (Deprecated)}
                             {--once : Only process the next job on the queue}
                             {--stop-when-empty : Stop when the queue is empty}
                             {--delay=0 : The number of seconds to delay failed jobs}
@@ -46,15 +46,24 @@ class WorkCommand extends Command
     protected $worker;
 
     /**
+     * The cache store implementation.
+     *
+     * @var \Illuminate\Contracts\Cache\Repository
+     */
+    protected $cache;
+
+    /**
      * Create a new queue work command.
      *
      * @param  \Illuminate\Queue\Worker  $worker
+     * @param  \Illuminate\Contracts\Cache\Repository  $cache
      * @return void
      */
-    public function __construct(Worker $worker)
+    public function __construct(Worker $worker, Cache $cache)
     {
         parent::__construct();
 
+        $this->cache = $cache;
         $this->worker = $worker;
     }
 
@@ -96,7 +105,7 @@ class WorkCommand extends Command
      */
     protected function runWorker($connection, $queue)
     {
-        $this->worker->setCache($this->laravel['cache']->driver());
+        $this->worker->setCache($this->cache);
 
         return $this->worker->{$this->option('once') ? 'runNextJob' : 'daemon'}(
             $connection, $queue, $this->gatherWorkerOptions()

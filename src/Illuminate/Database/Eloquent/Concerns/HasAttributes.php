@@ -376,9 +376,7 @@ trait HasAttributes
      */
     protected function getAttributeFromArray($key)
     {
-        if (isset($this->attributes[$key])) {
-            return $this->attributes[$key];
-        }
+        return $this->attributes[$key] ?? null;
     }
 
     /**
@@ -629,7 +627,7 @@ trait HasAttributes
      */
     protected function isDateAttribute($key)
     {
-        return in_array($key, $this->getDates()) ||
+        return in_array($key, $this->getDates(), true) ||
                                     $this->isDateCastable($key);
     }
 

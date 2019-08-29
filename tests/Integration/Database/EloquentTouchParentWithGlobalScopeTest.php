@@ -34,15 +34,15 @@ class EloquentTouchParentWithGlobalScopeTest extends DatabaseTestCase
         Carbon::setTestNow(null);
     }
 
-    public function test_basic_create_and_retrieve()
+    public function testBasicCreateAndRetrieve()
     {
         $post = Post::create(['title' => Str::random(), 'updated_at' => '2016-10-10 10:10:10']);
 
-        $this->assertEquals('2016-10-10', $post->fresh()->updated_at->toDateString());
+        $this->assertSame('2016-10-10', $post->fresh()->updated_at->toDateString());
 
         $post->comments()->create(['title' => Str::random()]);
 
-        $this->assertNotEquals('2016-10-10', $post->fresh()->updated_at->toDateString());
+        $this->assertNotSame('2016-10-10', $post->fresh()->updated_at->toDateString());
     }
 }
 
